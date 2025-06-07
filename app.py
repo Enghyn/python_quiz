@@ -70,34 +70,6 @@ CACHE_MIN = 100   # Umbral mínimo para reponer el cache
 pregunta_cache = queue.Queue(maxsize=CACHE_SIZE)
 
 # =============================
-# HILO DE PRECARGA DE PREGUNTAS
-# =============================
-def precargar_preguntas():
-    """
-    Hilo en segundo plano que mantiene el cache de preguntas lleno.
-    Solo consulta la API si el cache baja del umbral.
-    """
-    while True:
-        if pregunta_cache.qsize() < CACHE_MIN:
-            try:
-                pregunta = generar_pregunta()
-                # Solo cachea si es válida
-                if isinstance(pregunta, dict) and 'pregunta' in pregunta and 'codigo' in pregunta:
-                    pregunta_cache.put(pregunta)
-                time.sleep(5)  # Espera 5 segundos entre peticiones para no saturar la API
-            except Exception as e:
-                # Si es un error de cuota, espera más tiempo
-                if "RESOURCE_EXHAUSTED" in str(e):
-                    time.sleep(35)  # Espera el tiempo sugerido por la API
-                else:
-                    time.sleep(5)
-        else:
-            time.sleep(2)  # Espera antes de volver a chequear
-
-# Inicia el hilo de precarga al arrancar la app
-threading.Thread(target=precargar_preguntas, daemon=True).start()
-
-# =============================
 # GENERACIÓN Y OBTENCIÓN DE PREGUNTAS
 # =============================
 def generar_pregunta():
@@ -137,6 +109,33 @@ def generar_pregunta():
         # Si falla el parseo, devuelve un error para mostrarlo en la app
         return {"error": "No se pudo extraer el JSON", "detalle": str(e), "texto": response.text}
 
+# =============================
+# HILO DE PRECARGA DE PREGUNTAS
+# =============================
+def precargar_preguntas():
+    """
+    Hilo en segundo plano que mantiene el cache de preguntas lleno.
+    Solo consulta la API si el cache baja del umbral.
+    """
+    while True:
+        if pregunta_cache.qsize() < CACHE_MIN:
+            try:
+                pregunta = generar_pregunta()
+                # Solo cachea si es válida
+                if isinstance(pregunta, dict) and 'pregunta' in pregunta and 'codigo' in pregunta:
+                    pregunta_cache.put(pregunta)
+            except Exception as e:
+                # Si es un error de cuota, espera más tiempo
+                if "RESOURCE_EXHAUSTED" in str(e):
+                    time.sleep(35)  # Espera el tiempo sugerido por la API
+                else:
+                    time.sleep(5)
+        else:
+            time.sleep(2)  # Espera antes de volver a chequear
+
+# Inicia el hilo de precarga al arrancar la app
+threading.Thread(target=precargar_preguntas, daemon=True).start()
+
 def obtener_pregunta_cache():
     """
     Obtiene una pregunta del cache (espera hasta 10s).
@@ -146,6 +145,7 @@ def obtener_pregunta_cache():
         return pregunta_cache.get(timeout=10)
     except Exception:
         pregunta = generar_pregunta()
+        print(f"Generando pregunta en caliente: {pregunta}")
         if "error" in pregunta and "RESOURCE_EXHAUSTED" in pregunta.get("detalle", ""):
             return {
                 "pregunta": "¡Límite de uso alcanzado!",
