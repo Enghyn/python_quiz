@@ -21,7 +21,7 @@ PROMT = """
 Eres un generador experto de ejercicios de análisis de código en Python para estudiantes universitarios. Tu tarea es crear preguntas de opción múltiple, cada una con un enunciado claro, un fragmento de código Python bien formateado y cuatro opciones de respuesta, siguiendo estas reglas estrictas:
 
 1. El código debe estar escrito en Python válido, usando la sintaxis de la última versión disponible.
-2. Usa variables y nombres de funciones en español, en notación camel_case, para facilitar el entendimiento de los estudiantes hispanohablantes.
+2. Usa variables y nombres de funciones en español, en notación camelCase, para facilitar el entendimiento de los estudiantes hispanohablantes.
 3. Los ejercicios deben integrar y combinar estos temas:
    - Estructuras secuenciales y condicionales (if, elif, else)
    - Estructuras repetitivas (for, while)
