@@ -65,10 +65,9 @@ client = genai.Client(api_key=GENAI_API_KEY)
 # =============================
 # CACHE DE PREGUNTAS (COLA)
 # =============================
-CACHE_SIZE = 400  # Máximo de preguntas en cache
-CACHE_MIN = 200   # Umbral mínimo para reponer el cache
+CACHE_SIZE = 200  # Máximo de preguntas en cache
+CACHE_MIN = 100   # Umbral mínimo para reponer el cache
 pregunta_cache = queue.Queue(maxsize=CACHE_SIZE)
-cache_lock = threading.Lock()  # (No se usa, pero útil si se extiende)
 
 # =============================
 # HILO DE PRECARGA DE PREGUNTAS
@@ -85,8 +84,13 @@ def precargar_preguntas():
                 # Solo cachea si es válida
                 if isinstance(pregunta, dict) and 'pregunta' in pregunta and 'codigo' in pregunta:
                     pregunta_cache.put(pregunta)
-            except Exception:
-                pass  # Silencia errores para no detener el hilo
+                time.sleep(5)  # Espera 5 segundos entre peticiones para no saturar la API
+            except Exception as e:
+                # Si es un error de cuota, espera más tiempo
+                if "RESOURCE_EXHAUSTED" in str(e):
+                    time.sleep(35)  # Espera el tiempo sugerido por la API
+                else:
+                    time.sleep(5)
         else:
             time.sleep(2)  # Espera antes de volver a chequear
 
@@ -141,7 +145,16 @@ def obtener_pregunta_cache():
     try:
         return pregunta_cache.get(timeout=10)
     except Exception:
-        return generar_pregunta()
+        pregunta = generar_pregunta()
+        if "error" in pregunta and "RESOURCE_EXHAUSTED" in pregunta.get("detalle", ""):
+            return {
+                "pregunta": "¡Límite de uso alcanzado!",
+                "codigo": "",
+                "respuestas": [],
+                "respuesta_correcta": "",
+                "explicacion": "Se ha superado el límite de uso de la API. Por favor, espera un minuto y vuelve a intentarlo."
+            }
+        return pregunta
 
 # =============================
 # FLASK APP Y RUTAS
