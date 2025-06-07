@@ -145,7 +145,6 @@ def obtener_pregunta_cache():
         return pregunta_cache.get(timeout=10)
     except Exception:
         pregunta = generar_pregunta()
-        print(f"Generando pregunta en caliente: {pregunta}")
         if "error" in pregunta and "RESOURCE_EXHAUSTED" in pregunta.get("detalle", ""):
             return {
                 "pregunta": "¡Límite de uso alcanzado!",
