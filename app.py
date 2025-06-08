@@ -10,7 +10,7 @@ import threading
 import queue
 from google import genai
 
-# Carga variables de entorno desde .env (clave de API, etc.)
+# Carga variables de entorno desde .env
 load_dotenv()
 GENAI_API_KEY = os.getenv("GENAI_API_KEY")
 
@@ -83,7 +83,7 @@ def generar_pregunta():
     )
     try:
         text = response.text.strip()
-        # Limpieza de posibles bloques de código
+        # Limpia el texto de bloques de código Markdown
         if text.startswith("```json"):
             text = text[7:]
         if text.startswith("```"):
@@ -91,7 +91,7 @@ def generar_pregunta():
         if text.endswith("```"):
             text = text[:-3]
         pregunta_json = json.loads(text)
-        # Si "Respuestas" es una lista, úsala directamente. Si es string, sepáralo por comas.
+        # Validación de la estructura del JSON
         respuestas = pregunta_json.get("Respuestas")
         if isinstance(respuestas, str):
             respuestas = [r.strip() for r in respuestas.split(",")]
@@ -106,7 +106,6 @@ def generar_pregunta():
         }
         return pregunta
     except Exception as e:
-        # Si falla el parseo, devuelve un error para mostrarlo en la app
         return {"error": "No se pudo extraer el JSON", "detalle": str(e), "texto": response.text}
 
 # =============================
@@ -121,13 +120,14 @@ def precargar_preguntas():
         if pregunta_cache.qsize() < CACHE_MIN:
             try:
                 pregunta = generar_pregunta()
-                # Solo cachea si es válida
+                # Solo la guarda si es válida
                 if isinstance(pregunta, dict) and 'pregunta' in pregunta and 'codigo' in pregunta:
                     pregunta_cache.put(pregunta)
+                time.sleep(1)  # Espera un segundo antes de volver a intentar
             except Exception as e:
                 # Si es un error de cuota, espera más tiempo
                 if "RESOURCE_EXHAUSTED" in str(e):
-                    time.sleep(35)  # Espera el tiempo sugerido por la API
+                    time.sleep(35)
                 else:
                     time.sleep(5)
         else:
