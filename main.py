@@ -215,22 +215,22 @@ def inicio(request: Request):
     return response
 
 @app.get("/quiz", name="quiz")
-def quiz_get(request: Request):
+async def quiz_get(request: Request):
     """
     Muestra la pregunta actual.
     Si la sesión no existe o está incompleta, la inicializa.
     """
     session = get_session(request)
-    if not all(k in session for k in ['puntaje', 'total', 'inicio', 'pregunta_actual', 'errores']):
+    if not all(k in session for k in ['puntaje', 'total', 'inicio', 'pregunta_actual', 'errores']) or session == {}:
         session = {
             'puntaje': 0,
-            'total': 0,
+            'total': 1,
             'inicio': int(time.time()),
             'pregunta_actual': obtener_pregunta_cache(),
             'errores': []
         }
     pregunta = session['pregunta_actual']
-    num_pregunta = session.get('total', 0) + 1
+    num_pregunta = session.get('total', 1)
     response = templates.TemplateResponse(
         'quiz.html',
         {'request': request, 'pregunta': pregunta, 'num_pregunta': num_pregunta}
@@ -252,7 +252,7 @@ async def quiz_post(request: Request, respuesta: str = Form(...)):
 
     seleccion = respuesta
     correcta = session['pregunta_actual']['respuesta_correcta']
-    explicacion = session['pregunta_actual'].get('explicacion', '')
+    explicacion = session['pregunta_actual']['explicacion']
     session['total'] += 1
     if seleccion and seleccion.strip() == correcta.strip():
         session['puntaje'] += 1
