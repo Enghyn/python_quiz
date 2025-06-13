@@ -169,6 +169,12 @@ templates = Jinja2Templates(directory=templates_path)
 
 # Configuración de la clave secreta y serializador para cookies firmadas
 SECRET_KEY = os.getenv("SESSION_SECRET_KEY")
+
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SESSION_SECRET_KEY no está configurada. "
+        "Establezca un valor seguro en su entorno o archivo .env."
+    )
 SESSION_COOKIE = "quiz_session"
 serializer = URLSafeSerializer(SECRET_KEY)
 
