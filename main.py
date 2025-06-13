@@ -168,7 +168,7 @@ templates_path = os.path.join(os.path.dirname(__file__), 'templates')
 templates = Jinja2Templates(directory=templates_path)
 
 # Configuración de la clave secreta y serializador para cookies firmadas
-SECRET_KEY = os.environ.get("SESSION_SECRET_KEY", "clave-muy-secreta")
+SECRET_KEY = os.getenv("SESSION_SECRET_KEY")
 SESSION_COOKIE = "quiz_session"
 serializer = URLSafeSerializer(SECRET_KEY)
 
@@ -198,7 +198,7 @@ def clear_session(response: Response):
     """
     response.delete_cookie(SESSION_COOKIE)
 
-@app.get('/')
+@app.get('/', name="inicio")
 def inicio(request: Request):
     """
     Ruta de inicio: muestra la presentación y botón para comenzar el quiz.
