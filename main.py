@@ -224,13 +224,13 @@ async def quiz_get(request: Request):
     if not all(k in session for k in ['puntaje', 'total', 'inicio', 'pregunta_actual', 'errores']) or session == {}:
         session = {
             'puntaje': 0,
-            'total': 1,
+            'total': 0,
             'inicio': int(time.time()),
             'pregunta_actual': obtener_pregunta_cache(),
             'errores': []
         }
     pregunta = session['pregunta_actual']
-    num_pregunta = session.get('total', 1)
+    num_pregunta = session.get('total', 0) + 1
     response = templates.TemplateResponse(
         'quiz.html',
         {'request': request, 'pregunta': pregunta, 'num_pregunta': num_pregunta}
